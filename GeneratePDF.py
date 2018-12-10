@@ -3,9 +3,10 @@
 __author__ = "Juan Manuel Fernández Nácher"
 
 # Librerías del sistema
-from os import remove
 from os import path
 from os import makedirs
+from os import remove
+from shutil import rmtree
 
 # Librería para generar PDF's
 # doc: https://pypi.python.org/pypi/pdfkit
@@ -57,6 +58,7 @@ class GeneratePDF:
 
                 from_file(htmlFile, outFilename)
                 remove(htmlFile)
+                rmtree(directorio)
 
             return outFilename
         except Exception as ex:
