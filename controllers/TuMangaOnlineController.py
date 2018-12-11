@@ -50,7 +50,7 @@ class TuMangaOnlineController:
             if data[Comando.Accion.value] == Opcion.Capitulo.value:
                 self.service.obtenerListadoCapitulos(userId)
             if data[Comando.Accion.value] == Opcion.PDF.value:
-                self.__descargarCapituloPDF(bot, update, userId)
+                self.__descargarCapituloPDF(bot, update, userId, chatId, messageId)
 
     ################
     #### LÓGICA ####
@@ -92,9 +92,14 @@ class TuMangaOnlineController:
         bot.editMessageText(text=text, chat_id=chatId, message_id=messageId, reply_markup=createInlineKeyboardMarkup(layout))
     
 
-    def __descargarCapituloPDF(self, bot, update, userId):
+    def __descargarCapituloPDF(self, bot, update, userId, chatId, messageId):
+        bot.editMessageText(text='Descargando capítulo...', chat_id=chatId, message_id=messageId)
         capitulo = self.service.descargarCapituloPDF(userId)
         pdf = open(capitulo[3], 'rb')
         text = 'Capítulo {0}\n{1}\n{2}'.format(capitulo[0], capitulo[1], capitulo[2])
         bot.sendDocument(chat_id=userId, document=pdf, caption=text)
+        if userId == chatId: # canal privado
+            bot.deleteMessage(chat_id=chatId, message_id=messageId)
+        else: # es un grupo
+            bot.editMessageText(text=text, chat_id=chatId, message_id=messageId)
         capitulo.close()
