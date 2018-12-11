@@ -28,24 +28,7 @@ class TuMangaOnlineController:
         update.message.reply_text('Escribe /get para obtener el manga que quieras!')
 
     def get(self, bot, update):
-        userId = update.message.from_user.id
-
-        layout = [
-            [
-                {
-                    'label': 'Último capítulo',
-                    'callback': dumps({Comando.Accion.value: Opcion.UltimoCapitulo.value, Comando.User.value: userId})
-                }
-            ],
-            [
-                {
-                    'label': 'Capítulo concreto',
-                    'callback': dumps({Comando.Accion.value: Opcion.Capitulo.value, Comando.User.value: userId})
-                }
-            ]
-        ]
-
-        update.message.reply_text('¿Qué quieres obtener?', reply_markup = createInlineKeyboardMarkup(layout))
+        self.__menuInicial(bot, update)
 
     #########################
     #### GESTIÓN BOTONES ####
@@ -63,23 +46,55 @@ class TuMangaOnlineController:
         data = loads(query.data)
         if data[Comando.User.value] == userId:
             if data[Comando.Accion.value] == Opcion.UltimoCapitulo.value:
-                capitulo = self.service.obtenerUltimoCapitulo(userId)
-                text = 'Capítulo {0}\n{1}\n{2}'.format(capitulo[0], capitulo[1], capitulo[2])
-                layout = [
-                    [
-                        {
-                            'label': 'Descargar PDF',
-                            'callback': dumps({Comando.Accion.value: Opcion.PDF.value, Comando.User.value: userId})
-                        }
-                    ]
-                ]
-                bot.editMessageText(text=text, chat_id=chatId, message_id=messageId, reply_markup = createInlineKeyboardMarkup(layout))
+                self.__obtenerEnlaceUltimoCapitulo(bot, update, userId, chatId, messageId)
             if data[Comando.Accion.value] == Opcion.Capitulo.value:
                 self.service.obtenerListadoCapitulos(userId)
+            if data[Comando.Accion.value] == Opcion.PDF.value:
+                self.__descargarCapituloPDF(bot, update, userId)
 
     ################
     #### LÓGICA ####
     ################
-    def prueba(self):
-        a = TuMangaOnlineService()
-        a.prueba()
+
+    def __menuInicial(self, bot, update):
+        userId = update.message.from_user.id
+
+        layout = [
+            [
+                {
+                    'label': 'Último capítulo',
+                    'callback': dumps({Comando.Accion.value: Opcion.UltimoCapitulo.value, Comando.User.value: userId})
+                }
+            ],
+            [
+                {
+                    'label': 'Capítulo concreto',
+                    'callback': dumps({Comando.Accion.value: Opcion.Capitulo.value, Comando.User.value: userId})
+                }
+            ]
+        ]
+
+        update.message.reply_text('¿Qué quieres obtener?', reply_markup=createInlineKeyboardMarkup(layout))
+
+
+    def __obtenerEnlaceUltimoCapitulo(self, bot, update, userId, chatId, messageId):
+        capitulo = self.service.obtenerUltimoCapitulo(userId)
+        text = 'Capítulo {0}\n{1}\n{2}'.format(capitulo[0], capitulo[1], capitulo[2])
+        print(text)
+        layout = [
+            [
+                {
+                    'label': 'Descargar PDF',
+                    'callback': dumps({Comando.Accion.value: Opcion.PDF.value, Comando.User.value: userId})
+                }
+            ]
+        ]
+        bot.editMessageText(text=text, chat_id=chatId, message_id=messageId, reply_markup=createInlineKeyboardMarkup(layout))
+    
+
+    def __descargarCapituloPDF(self, bot, update, userId):
+        capitulo = self.service.descargarCapituloPDF(userId)
+        pdf = open(capitulo[3], 'rb')
+        text = 'Capítulo {0}\n{1}\n{2}'.format(capitulo[0], capitulo[1], capitulo[2])
+        bot.sendDocument(chat_id=userId, document=pdf, caption=text)
+        capitulo.close()
