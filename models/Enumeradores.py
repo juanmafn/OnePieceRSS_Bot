@@ -10,7 +10,7 @@ class Comando(Enum):
     
 
 class Opcion(Enum):
-    Ultimo = '1'
+    UltimoCapitulo = '1'
     Capitulo = '2'
     PDF = '3'
     CANCEL = '4'

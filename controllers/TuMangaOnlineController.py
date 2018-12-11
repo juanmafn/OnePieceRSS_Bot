@@ -15,8 +15,7 @@ sys.path.append('../')
 
 class TuMangaOnlineController:
     def __init__(self):
-        self.CAPITULOS = {}
-        self.urlOnePiece = 'https://tmofans.com/library/manga/45/one-piece'
+        self.service = TuMangaOnlineService()
 
     ##################
     #### COMANDOS ####
@@ -35,9 +34,10 @@ class TuMangaOnlineController:
             [
                 {
                     'label': 'Último capítulo',
-                    'callback': dumps({Comando.Accion.value: Opcion.Ultimo.value, Comando.User.value: userId})
+                    'callback': dumps({Comando.Accion.value: Opcion.UltimoCapitulo.value, Comando.User.value: userId})
                 }
-            ], [
+            ],
+            [
                 {
                     'label': 'Capítulo concreto',
                     'callback': dumps({Comando.Accion.value: Opcion.Capitulo.value, Comando.User.value: userId})
@@ -52,7 +52,30 @@ class TuMangaOnlineController:
     #########################
 
     def buttonsController(self, bot, update):
-        None
+        query = update.callback_query
+        chatId = query.message.chat_id
+        messageId = query.message.message_id
+        userId = None
+        if query.message.chat.type == 'private':
+            userId = query.message.chat.id
+        else:
+            userId = query.message.reply_to_message.from_user.id
+        data = loads(query.data)
+        if data[Comando.User.value] == userId:
+            if data[Comando.Accion.value] == Opcion.UltimoCapitulo.value:
+                capitulo = self.service.obtenerUltimoCapitulo(userId)
+                text = 'Capítulo {0}\n{1}\n{2}'.format(capitulo[0], capitulo[1], capitulo[2])
+                layout = [
+                    [
+                        {
+                            'label': 'Descargar PDF',
+                            'callback': dumps({Comando.Accion.value: Opcion.PDF.value, Comando.User.value: userId})
+                        }
+                    ]
+                ]
+                bot.editMessageText(text=text, chat_id=chatId, message_id=messageId, reply_markup = createInlineKeyboardMarkup(layout))
+            if data[Comando.Accion.value] == Opcion.Capitulo.value:
+                self.service.obtenerListadoCapitulos(userId)
 
     ################
     #### LÓGICA ####
